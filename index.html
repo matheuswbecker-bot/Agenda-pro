@@ -116,5 +116,656 @@ textarea{resize:vertical;min-height:80px}
       <button onclick="showSection('agenda',this)">Agenda</button>
       <button onclick="showSection('atividades',this)">Atividades</button>
       <button onclick="showSection('timer',this)">Timer / Foco</button>
-      <button onclick="showSection('produtividade',this)">
+      <button onclick="showSection('produtividade',this)">Produtividade</button>
+    </div>
+    <div class="datebox" id="sidebarDate"></div>
+  </aside>
 
+  <main class="main">
+    <section id="dashboard" class="section active">
+      <div class="header">
+        <div><h2 id="greeting">Bom dia</h2><p id="todayLabel"></p></div>
+        <div class="actions"><button class="btn primary" onclick="openModal()">+ Nova atividade</button></div>
+      </div>
+      <div class="grid4" id="statsGrid"></div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Atividades de hoje</div><div id="todayActivities" class="list"></div></div>
+        <div class="card">
+          <div class="card-title">Score do dia</div>
+          <div class="score-wrap">
+            <div class="ring">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="52" stroke="#2b3241" stroke-width="12" fill="none"></circle>
+                <circle id="scoreCircle" cx="70" cy="70" r="52" stroke="var(--accent)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+              </svg>
+              <div class="center"><div class="num" id="scoreNum">0</div><div class="txt">SCORE</div></div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="margin-bottom:12px">
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Concluidas</span><span id="doneCount">0</span></div>
+                <div class="progress"><div id="doneBar" class="fill" style="width:0%;background:var(--success)"></div></div>
+              </div>
+              <div style="margin-bottom:12px">
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Em progresso</span><span id="progCount">0</span></div>
+                <div class="progress"><div id="progBar" class="fill" style="width:0%;background:var(--accent)"></div></div>
+              </div>
+              <div>
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Pendentes</span><span id="pendCount">0</span></div>
+                <div class="progress"><div id="pendBar" class="fill" style="width:0%;background:var(--warning)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Ultimos 7 dias</div><div id="weekChart" class="bars"></div></div>
+        <div class="card"><div class="card-title">Proximas na agenda</div><div id="upcomingList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="agenda" class="section">
+      <div class="header">
+        <div><h2>Agenda</h2><p>Organize seus compromissos por dia e mes</p></div>
+        <div class="actions">
+          <button class="btn ghost" onclick="changeMonth(-1)">Mes anterior</button>
+          <button class="btn ghost" onclick="changeMonth(1)">Proximo mes</button>
+          <button class="btn primary" onclick="openModal()">+ Adicionar</button>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title" id="monthLabel">Calendario</div><div id="calendar" class="calendar"></div></div>
+        <div class="card"><div class="card-title" id="selectedDayTitle">Eventos do dia</div><div id="dayEvents" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="atividades" class="section">
+      <div class="header">
+        <div><h2>Atividades</h2><p>Cadastre, filtre e acompanhe tudo</p></div>
+        <div class="actions">
+          <select id="filterCategory" onchange="renderActivities()" style="width:auto">
+            <option value="">Todas categorias</option>
+            <option value="work">Trabalho</option>
+            <option value="health">Saude</option>
+            <option value="personal">Pessoal</option>
+            <option value="study">Estudo</option>
+            <option value="other">Outro</option>
+          </select>
+          <select id="filterStatus" onchange="renderActivities()" style="width:auto">
+            <option value="">Todos status</option>
+            <option value="pending">Pendente</option>
+            <option value="progress">Em progresso</option>
+            <option value="done">Concluido</option>
+          </select>
+          <button class="btn primary" onclick="openModal()">+ Nova atividade</button>
+        </div>
+      </div>
+      <div class="card"><div id="activitiesList" class="list"></div></div>
+    </section>
+
+    <section id="timer" class="section">
+      <div class="header"><div><h2>Timer / Foco</h2><p>Pomodoro e sessoes de produtividade</p></div></div>
+      <div class="grid3">
+        <div class="card" style="grid-column:span 2">
+          <div class="card-title">Pomodoro</div>
+          <div class="timer">
+            <div class="toolbar">
+              <button id="modeWork" class="btn ghost" onclick="setTimerMode('work')">Foco 25 min</button>
+              <button id="modeShort" class="btn ghost" onclick="setTimerMode('short')">Pausa 5 min</button>
+              <button id="modeLong" class="btn ghost" onclick="setTimerMode('long')">Pausa 15 min</button>
+            </div>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="pom-dots" id="pomDots"></div>
+            <div class="toolbar">
+              <button class="btn primary" id="timerStartBtn" onclick="toggleTimer()">Iniciar</button>
+              <button class="btn ghost" onclick="resetTimer()">Resetar</button>
+            </div>
+            <div style="width:100%;max-width:420px;margin-top:8px">
+              <label class="muted" style="display:block;text-align:left;margin-bottom:6px;font-size:.82rem;font-weight:800">Vincular a atividade</label>
+              <select id="timerActivity"></select>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Sessoes de hoje</div>
+          <div id="sessionsList" class="list"></div>
+          <div class="divider"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="muted">Total focado hoje</span>
+            <strong id="focusedToday">0 min</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="produtividade" class="section">
+      <div class="header"><div><h2>Produtividade</h2><p>Resumo e historico de desempenho</p></div></div>
+      <div class="grid4" id="prodStats"></div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Distribuicao por categoria</div><div id="categoryStats" class="list"></div></div>
+        <div class="card"><div class="card-title">Conclusoes nos ultimos 7 dias</div><div id="completionChart" class="bars"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Historico completo</div><div id="historyList" class="list"></div></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <h3 id="modalTitle">Nova atividade</h3>
+    <div class="form-group"><label>Titulo</label><input id="actTitle" placeholder="Ex.: Reuniao com cliente"/></div>
+    <div class="form-row">
+      <div class="form-group"><label>Categoria</label>
+        <select id="actCategory">
+          <option value="work">Trabalho</option>
+          <option value="health">Saude</option>
+          <option value="personal">Pessoal</option>
+          <option value="study">Estudo</option>
+          <option value="other">Outro</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Prioridade</label>
+        <select id="actPriority">
+          <option value="high">Alta</option>
+          <option value="mid">Media</option>
+          <option value="low">Baixa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Data</label><input id="actDate" type="date"/></div>
+      <div class="form-group"><label>Hora</label><input id="actTime" type="time"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Duracao estimada (min)</label><input id="actDuration" type="number" min="1" placeholder="60"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="actStatus">
+          <option value="pending">Pendente</option>
+          <option value="progress">Em progresso</option>
+          <option value="done">Concluido</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Observacoes</label><textarea id="actNotes" placeholder="Notas, links, detalhes..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="saveActivity()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+var LS_ACT='agendapro_v2_act';
+var LS_SES='agendapro_v2_ses';
+var LS_POM='agendapro_v2_pom';
+
+var activities=JSON.parse(localStorage.getItem(LS_ACT)||'[]');
+var sessions=JSON.parse(localStorage.getItem(LS_SES)||'[]');
+var pomCount=parseInt(localStorage.getItem(LS_POM)||'0',10);
+
+var currentMonth=new Date();
+var selectedDate=new Date();
+var editingId=null;
+var timerMode='work';
+var timerSeconds=25*60;
+var timerRunning=false;
+var timerInterval=null;
+
+var CATS={
+  work:{label:'Trabalho',color:'#7c6cff'},
+  health:{label:'Saude',color:'#4bc08d'},
+  personal:{label:'Pessoal',color:'#ff6b8b'},
+  study:{label:'Estudo',color:'#6ddfb5'},
+  other:{label:'Outro',color:'#ffbf5b'}
+};
+
+var STATUS={
+  pending:{label:'Pendente'},
+  progress:{label:'Em progresso'},
+  done:{label:'Concluido'}
+};
+
+var POM={work:25*60,short:5*60,long:15*60};
+
+function uid(){return 'id'+Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function toInputDate(d){return d.toISOString().slice(0,10)}
+
+function fmtDate(ds){
+  var d=new Date(ds+'T00:00:00');
+  return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});
+}
+
+function fmtMonth(d){
+  var s=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show')},2200);
+}
+
+function saveAll(){
+  localStorage.setItem(LS_ACT,JSON.stringify(activities));
+  localStorage.setItem(LS_SES,JSON.stringify(sessions));
+  localStorage.setItem(LS_POM,String(pomCount));
+}
+
+function sortActs(list){
+  return list.slice().sort(function(a,b){
+    if(a.date!==b.date)return a.date<b.date?-1:1;
+    return (a.time||'')<(b.time||'')?-1:1;
+  });
+}
+
+function getTodayActs(){return activities.filter(function(a){return a.date===todayStr()})}
+
+function getFocusedToday(){
+  return sessions.filter(function(s){return s.date===todayStr()&&s.mode==='work'})
+    .reduce(function(sum,s){return sum+s.duration},0);
+}
+
+function escHtml(str){
+  return String(str)
+    .split('&').join('&')
+    .split('<').join('<')
+    .split('>').join('>')
+    .split('"').join('&quot;');
+}
+
+function actHTML(a,showBtns){
+  var cat=CATS[a.category]||{label:'Outro',color:'#888'};
+  var st=STATUS[a.status]||{label:a.status};
+  var strike=a.status==='done'?'text-decoration:line-through;opacity:.7':'';
+  var btns=showBtns
+    ?'<div class="small-actions">'
+      +'<button class="btn ghost" onclick="event.stopPropagation();cycleStatus(\''+a.id+'\')">Alternar</button>'
+      +'<button class="btn danger" onclick="event.stopPropagation();deleteActivity(\''+a.id+'\')">Excluir</button>'
+      +'</div>'
+    :'';
+  return '<div class="item" onclick="openModal(\''+a.id+'\')">'
+    +'<div class="dot" style="background:'+cat.color+'"></div>'
+    +'<div class="item-main">'
+      +'<div class="item-title" style="'+strike+'">'+escHtml(a.title)+'</div>'
+      +'<div class="item-meta">'
+        +'<span class="badge '+a.category+'">'+cat.label+'</span>'
+        +'<span>'+fmtDate(a.date)+(a.time?' - '+a.time:'')+'</span>'
+        +(a.duration?'<span>'+a.duration+' min</span>':'')
+      +'</div>'
+      +(a.notes?'<div class="muted" style="margin-top:6px;font-size:.82rem">'+escHtml(a.notes)+'</div>':'')
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">'
+      +'<span class="status '+a.status+'">'+st.label+'</span>'
+      +btns
+    +'</div>'
+    +'</div>';
+}
+
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active')});
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active')});
+  if(btn)btn.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='agenda')renderCalendar();
+  if(id==='atividades')renderActivities();
+  if(id==='timer')renderTimer();
+  if(id==='produtividade')renderProductivity();
+}
+
+function openModal(id){
+  editingId=id||null;
+  var title=document.getElementById('modalTitle');
+  if(id){
+    var a=activities.filter(function(x){return x.id===id})[0];
+    if(!a)return;
+    title.textContent='Editar atividade';
+    document.getElementById('actTitle').value=a.title||'';
+    document.getElementById('actCategory').value=a.category||'work';
+    document.getElementById('actPriority').value=a.priority||'mid';
+    document.getElementById('actDate').value=a.date||todayStr();
+    document.getElementById('actTime').value=a.time||'';
+    document.getElementById('actDuration').value=a.duration||'';
+    document.getElementById('actStatus').value=a.status||'pending';
+    document.getElementById('actNotes').value=a.notes||'';
+  } else {
+    title.textContent='Nova atividade';
+    document.getElementById('actTitle').value='';
+    document.getElementById('actCategory').value='work';
+    document.getElementById('actPriority').value='mid';
+    document.getElementById('actDate').value=todayStr();
+    document.getElementById('actTime').value='';
+    document.getElementById('actDuration').value='';
+    document.getElementById('actStatus').value='pending';
+    document.getElementById('actNotes').value='';
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('actTitle').focus();
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId=null;
+}
+
+function closeModalOnBg(e){if(e.target.id==='modalOverlay')closeModal()}
+
+function saveActivity(){
+  var title=document.getElementById('actTitle').value.trim();
+  if(!title){showToast('Adicione um titulo.');return}
+  var payload={
+    id:editingId||uid(),
+    title:title,
+    category:document.getElementById('actCategory').value,
+    priority:document.getElementById('actPriority').value,
+    date:document.getElementById('actDate').value||todayStr(),
+    time:document.getElementById('actTime').value||'',
+    duration:parseInt(document.getElementById('actDuration').value||'0',10),
+    status:document.getElementById('actStatus').value,
+    notes:document.getElementById('actNotes').value.trim()
+  };
+  if(editingId){
+    activities=activities.map(function(a){return a.id===editingId?payload:a});
+    showToast('Atividade atualizada.');
+  } else {
+    activities.push(payload);
+    showToast('Atividade criada.');
+  }
+  saveAll();
+  closeModal();
+  renderAll();
+}
+
+function deleteActivity(id){
+  if(!confirm('Excluir esta atividade?'))return;
+  activities=activities.filter(function(a){return a.id!==id});
+  saveAll();
+  showToast('Atividade excluida.');
+  renderAll();
+}
+
+function cycleStatus(id){
+  var order=['pending','progress','done'];
+  activities=activities.map(function(a){
+    if(a.id!==id)return a;
+    var idx=order.indexOf(a.status);
+    return Object.assign({},a,{status:order[(idx+1)%order.length]});
+  });
+  saveAll();
+  renderAll();
+}
+
+function renderDashboard(){
+  var now=new Date();
+  var h=now.getHours();
+  var greet=h<12?'Bom dia, Matheus!':h<18?'Boa tarde, Matheus!':'Boa noite, Matheus!';
+  document.getElementById('greeting').textContent=greet;
+  document.getElementById('todayLabel').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('sidebarDate').textContent=now.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+
+  var todayActs=getTodayActs();
+  var done=todayActs.filter(function(a){return a.status==='done'}).length;
+  var prog=todayActs.filter(function(a){return a.status==='progress'}).length;
+  var pend=todayActs.filter(function(a){return a.status==='pending'}).length;
+  var total=todayActs.length||1;
+  var score=Math.round(((done*100)+(prog*50))/total);
+
+  document.getElementById('statsGrid').innerHTML=
+    '<div class="stat"><div class="icon">📋</div><div class="label">Atividades hoje</div><div class="value">'+todayActs.length+'</div><div class="sub">'+activities.length+' no total</div></div>'
+    +'<div class="stat"><div class="icon">✅</div><div class="label">Concluidas hoje</div><div class="value" style="color:var(--success)">'+done+'</div><div class="sub">de '+todayActs.length+'</div></div>'
+    +'<div class="stat"><div class="icon">⏱️</div><div class="label">Tempo focado hoje</div><div class="value" style="color:var(--accent2)">'+getFocusedToday()+'</div><div class="sub">minutos</div></div>'
+    +'<div class="stat"><div class="icon">🔥</div><div class="label">Score do dia</div><div class="value" style="color:'+(score>=70?'var(--success)':score>=40?'var(--warning)':'var(--danger)')+'">'+score+'</div><div class="sub">de 100</div></div>';
+
+  var circ=2*Math.PI*52;
+  var offset=circ-(circ*Math.min(score,100)/100);
+  var circle=document.getElementById('scoreCircle');
+  circle.setAttribute('stroke-dasharray',String(circ));
+  circle.setAttribute('stroke-dashoffset',String(offset));
+  document.getElementById('scoreNum').textContent=score;
+
+  document.getElementById('doneCount').textContent=done;
+  document.getElementById('progCount').textContent=prog;
+  document.getElementById('pendCount').textContent=pend;
+  document.getElementById('doneBar').style.width=(done/total*100)+'%';
+  document.getElementById('progBar').style.width=(prog/total*100)+'%';
+  document.getElementById('pendBar').style.width=(pend/total*100)+'%';
+
+  var sorted=sortActs(todayActs).slice(0,6);
+  document.getElementById('todayActivities').innerHTML=sorted.length
+    ?sorted.map(function(a){return actHTML(a,true)}).join('')
+    :'<div class="empty"><div class="big">📭</div><div>Nenhuma atividade para hoje</div></div>';
+
+  var upcoming=sortActs(activities.filter(function(a){return a.date>todayStr()&&a.status!=='done'})).slice(0,6);
+  document.getElementById('upcomingList').innerHTML=upcoming.length
+    ?upcoming.map(function(a){return actHTML(a,true)}).join('')
+    :'<div class="empty"><div class="big">🗓️</div><div>Sem compromissos futuros</div></div>';
+
+  renderBars('weekChart');
+}
+
+function renderBars(targetId){
+  var el=document.getElementById(targetId);
+  var days=[];
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var ds=toInputDate(d);
+    var count=activities.filter(function(a){return a.date===ds&&a.status==='done'}).length;
+    days.push({label:d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''),count:count});
+  }
+  var max=Math.max.apply(null,days.map(function(d){return d.count}).concat([1]));
+  el.innerHTML=days.map(function(d){
+    return '<div class="barcol"><div class="bar" style="height:'+Math.max(d.count/max*90,d.count?8:4)+'px;background:'+(d.count?'var(--accent)':'#30384a')+'"></div><div class="barlabel">'+d.label+'</div></div>';
+  }).join('');
+}
+
+function renderCalendar(){
+  var y=currentMonth.getFullYear();
+  var m=currentMonth.getMonth();
+  document.getElementById('monthLabel').textContent=fmtMonth(currentMonth);
+
+  var first=new Date(y,m,1);
+  var firstWd=first.getDay();
+  var lastDay=new Date(y,m+1,0).getDate();
+  var heads=['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+  var html=heads.map(function(h){return '<div class="cal-head">'+h+'</div>'}).join('');
+
+  for(var i=0;i<firstWd;i++)html+='<div class="cal-day other"></div>';
+
+  var today=todayStr();
+  var sel=toInputDate(selectedDate);
+
+  for(var d=1;d<=lastDay;d++){
+    var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var has=activities.some(function(a){return a.date===ds});
+    var cls='cal-day'+(ds===today?' today':'')+(ds===sel?' selected':'');
+    html+='<div class="'+cls+'" onclick="selectDate(\''+ds+'\')">'
+      +d+(has?'<div class="cal-dot"></div>':'')
+      +'</div>';
+  }
+  document.getElementById('calendar').innerHTML=html;
+  renderDayEvents();
+}
+
+function changeMonth(delta){
+  currentMonth=new Date(currentMonth.getFullYear(),currentMonth.getMonth()+delta,1);
+  renderCalendar();
+}
+
+function selectDate(ds){
+  selectedDate=new Date(ds+'T00:00:00');
+  renderCalendar();
+}
+
+function renderDayEvents(){
+  var ds=toInputDate(selectedDate);
+  var d=new Date(ds+'T00:00:00');
+  document.getElementById('selectedDayTitle').textContent='Eventos de '+d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  var list=sortActs(activities.filter(function(a){return a.date===ds}));
+  document.getElementById('dayEvents').innerHTML=list.length
+    ?list.map(function(a){return actHTML(a,true)}).join('')
+    :'<div class="empty"><div class="big">📭</div><div>Nenhum evento neste dia</div></div>';
+}
+
+function renderActivities(){
+  var cat=document.getElementById('filterCategory')?document.getElementById('filterCategory').value:'';
+  var status=document.getElementById('filterStatus')?document.getElementById('filterStatus').value:'';
+  var list=activities.slice();
+  if(cat)list=list.filter(function(a){return a.category===cat});
+  if(status)list=list.filter(function(a){return a.status===status});
+  list=sortActs(list);
+  document.getElementById('activitiesList').innerHTML=list.length
+    ?list.map(function(a){return actHTML(a,false)}).join('')
+    :'<div class="empty"><div class="big">📭</div><div>Nenhuma atividade encontrada</div></div>';
+}
+
+function setTimerMode(mode){
+  timerMode=mode;
+  timerSeconds=POM[mode];
+  if(timerRunning)toggleTimer(true);
+  document.getElementById('modeWork').classList.toggle('primary',mode==='work');
+  document.getElementById('modeShort').classList.toggle('primary',mode==='short');
+  document.getElementById('modeLong').classList.toggle('primary',mode==='long');
+  updateTimerUI();
+}
+
+function updateTimerUI(){
+  var m=String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  var s=String(timerSeconds%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent=m+':'+s;
+  document.getElementById('timerStartBtn').textContent=timerRunning?'Pausar':'Iniciar';
+  var dots=document.getElementById('pomDots');
+  dots.innerHTML=Array.from({length:4},function(_,i){
+    return '<div class="pom-dot'+(i<(pomCount%4)?' on':'')+'"></div>';
+  }).join('');
+}
+
+function toggleTimer(forcePause){
+  if(timerRunning||forcePause){
+    clearInterval(timerInterval);
+    timerRunning=false;
+    updateTimerUI();
+    return;
+  }
+  timerRunning=true;
+  updateTimerUI();
+  timerInterval=setInterval(function(){
+    timerSeconds--;
+    updateTimerUI();
+    if(timerSeconds<=0){
+      clearInterval(timerInterval);
+      timerRunning=false;
+      var actId=document.getElementById('timerActivity').value||'';
+      var act=activities.filter(function(a){return a.id===actId})[0];
+      var dur=Math.round(POM[timerMode]/60);
+      sessions.push({
+        id:uid(),date:todayStr(),mode:timerMode,duration:dur,
+        time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        activityId:actId,activityTitle:act?act.title:''
+      });
+      if(timerMode==='work')pomCount+=1;
+      saveAll();
+      showToast(timerMode==='work'?'Sessao de foco concluida.':'Pausa concluida.');
+      timerSeconds=POM[timerMode];
+      renderAll();
+    }
+  },1000);
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);
+  timerRunning=false;
+  timerSeconds=POM[timerMode];
+  updateTimerUI();
+}
+
+function renderTimer(){
+  var sel=document.getElementById('timerActivity');
+  var cur=sel?sel.value:'';
+  var activeActs=sortActs(activities.filter(function(a){return a.status!=='done'}));
+  document.getElementById('timerActivity').innerHTML='<option value="">Sem atividade vinculada</option>'
+    +activeActs.map(function(a){return '<option value="'+a.id+'">'+escHtml(a.title)+'</option>'}).join('');
+  if(cur)document.getElementById('timerActivity').value=cur;
+
+  var todaySes=sessions.filter(function(s){return s.date===todayStr()});
+  document.getElementById('sessionsList').innerHTML=todaySes.length
+    ?todaySes.map(function(s){
+        return '<div class="item"><div class="dot" style="background:'+(s.mode==='work'?'var(--accent)':'var(--warning)')+'"></div>'
+          +'<div class="item-main"><div class="item-title">'+(s.mode==='work'?'Foco':s.mode==='short'?'Pausa':'Pausa longa')+' - '+s.duration+' min</div>'
+          +'<div class="item-meta"><span>'+s.time+'</span>'+(s.activityTitle?'<span>'+escHtml(s.activityTitle)+'</span>':'')+'</div></div></div>';
+      }).join('')
+    :'<div class="empty"><div class="big">⏱️</div><div>Nenhuma sessao hoje</div></div>';
+
+  document.getElementById('focusedToday').textContent=getFocusedToday()+' min';
+  updateTimerUI();
+}
+
+function renderProductivity(){
+  var total=activities.length;
+  var done=activities.filter(function(a){return a.status==='done'}).length;
+  var rate=total?Math.round(done/total*100):0;
+  var totalFocused=sessions.filter(function(s){return s.mode==='work'}).reduce(function(sum,s){return sum+s.duration},0);
+
+  document.getElementById('prodStats').innerHTML=
+    '<div class="stat"><div class="icon">📋</div><div class="label">Total de atividades</div><div class="value">'+total+'</div></div>'
+    +'<div class="stat"><div class="icon">✅</div><div class="label">Concluidas</div><div class="value" style="color:var(--success)">'+done+'</div></div>'
+    +'<div class="stat"><div class="icon">📈</div><div class="label">Taxa de conclusao</div><div class="value" style="color:'+(rate>=70?'var(--success)':rate>=40?'var(--warning)':'var(--danger)')+'">'+rate+'%</div></div>'
+    +'<div class="stat"><div class="icon">⏱️</div><div class="label">Tempo focado total</div><div class="value" style="color:var(--accent2)">'+totalFocused+'</div><div class="sub">minutos</div></div>';
+
+  var cats=Object.keys(CATS).map(function(k){
+    return {key:k,count:activities.filter(function(a){return a.category===k}).length};
+  }).filter(function(x){return x.count>0});
+  var maxCat=Math.max.apply(null,cats.map(function(c){return c.count}).concat([1]));
+
+  document.getElementById('categoryStats').innerHTML=cats.length
+    ?cats.map(function(c){
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><strong>'+CATS[c.key].label+'</strong><span class="muted">'+c.count+'</span></div>'
+          +'<div class="progress"><div class="fill" style="width:'+(c.count/maxCat*100)+'%;background:'+CATS[c.key].color+'"></div></div>'
+          +'</div>';
+      }).join('')
+    :'<div class="empty"><div class="big">📊</div><div>Sem dados ainda</div></div>';
+
+  renderBars('completionChart');
+
+  document.getElementById('historyList').innerHTML=activities.length
+    ?sortActs(activities).reverse().map(function(a){return actHTML(a,false)}).join('')
+    :'<div class="empty"><div class="big">🗂️</div><div>Nenhuma atividade cadastrada</div></div>';
+}
+
+function renderAll(){
+  renderDashboard();
+  renderCalendar();
+  renderActivities();
+  renderTimer();
+  renderProductivity();
+}
+
+function seedIfEmpty(){
+  if(activities.length)return;
+  var t=todayStr();
+  var yd=new Date();yd.setDate(yd.getDate()-1);var y=toInputDate(yd);
+  var tm=new Date();tm.setDate(tm.getDate()+1);var tmr=toInputDate(tm);
+  activities=[
+    {id:uid(),title:'Reuniao de planejamento',category:'work',priority:'high',date:t,time:'09:00',duration:60,status:'done',notes:''},
+    {id:uid(),title:'Academia',category:'health',priority:'mid',date:t,time:'07:00',duration:60,status:'done',notes:''},
+    {id:uid(),title:'Revisar relatorio',category:'work',priority:'high',date:t,time:'14:00',duration:90,status:'progress',notes:''},
+    {id:uid(),title:'Estudar JavaScript',category:'study',priority:'mid',date:t,time:'19:00',duration:90,status:'pending',notes:''},
+    {id:uid(),title:'Organizar financas',category:'personal',priority:'low',date:y,time:'',duration:45,status:'done',notes:''},
+    {id:uid(),title:'Ligar para cliente',category:'work',priority:'high',date:tmr,time:'10:00',duration:30,status:'pending',notes:''}
+  ];
+  saveAll();
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+
+selectedDate=new Date(todayStr()+'T00:00:00');
+seedIfEmpty();
+setTimerMode('work');
+renderAll();
+</script>
+</body>
+</html>
