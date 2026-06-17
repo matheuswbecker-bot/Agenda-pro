@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0f1116"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="description" content="Agenda, atividades e produtividade"/>
+<link rel="manifest" href="manifest.json"/>
 <title>AgendaPro</title>
 <style>
 :root{--bg:#0f1116;--panel:#171b24;--panel2:#1f2430;--border:#2b3241;--text:#e8ecf4;--muted:#96a0b5;--accent:#7c6cff;--accent2:#ff6b8b;--success:#4bc08d;--warning:#ffbf5b;--danger:#ff6b6b;--radius:16px;--shadow:0 10px 30px rgba(0,0,0,.35)}
@@ -100,6 +105,9 @@ textarea{resize:vertical;min-height:80px}
 .divider{height:1px;background:var(--border);margin:16px 0}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(14px);transition:.25s;z-index:2000;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
+.install-banner{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:14px 22px;border-radius:14px;box-shadow:var(--shadow);display:none;align-items:center;gap:12px;z-index:3000;font-weight:700}
+.install-banner.show{display:flex}
+.install-banner button{background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:800}
 @media(max-width:1100px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
 @media(max-width:760px){.sidebar{position:static;width:100%;border-right:none;border-bottom:1px solid var(--border)}.main{margin-left:0;width:100%;padding:16px}.app{display:block}.grid4{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
 </style>
@@ -293,6 +301,12 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<div class="install-banner" id="installBanner">
+  <span>Instalar AgendaPro no seu dispositivo</span>
+  <button onclick="installApp()">Instalar</button>
+  <button onclick="document.getElementById('installBanner').classList.remove('show')" style="background:rgba(255,255,255,.1)">Agora nao</button>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -311,6 +325,7 @@ var timerMode='work';
 var timerSeconds=25*60;
 var timerRunning=false;
 var timerInterval=null;
+var deferredPrompt=null;
 
 var CATS={
   work:{label:'Trabalho',color:'#7c6cff'},
@@ -502,7 +517,7 @@ function cycleStatus(id){
 function renderDashboard(){
   var now=new Date();
   var h=now.getHours();
-  var greet=h<12?'Bom dia, Matheus!':h<18?'Boa tarde, Matheus!':'Boa noite, Matheus!';
+  var greet=h<12?'Bom dia!':h<18?'Boa tarde!':'Boa noite!';
   document.getElementById('greeting').textContent=greet;
   document.getElementById('todayLabel').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('sidebarDate').textContent=now.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
@@ -758,6 +773,36 @@ function seedIfEmpty(){
     {id:uid(),title:'Ligar para cliente',category:'work',priority:'high',date:tmr,time:'10:00',duration:30,status:'pending',notes:''}
   ];
   saveAll();
+}
+
+// PWA install prompt
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){
+    deferredPrompt=null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+}
+
+window.addEventListener('appinstalled',function(){
+  showToast('AgendaPro instalado com sucesso!');
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(err){
+      console.log('SW error:',err);
+    });
+  });
 }
 
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
