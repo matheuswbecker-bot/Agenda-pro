@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgendaPro</title>
+<style>
+  :root{
+    --bg:#0f1116;
+    --panel:#171b24;
+    --panel2:#1f2430;
+    --border:#2b3241;
+    --text:#e8ecf4;
+    --muted:#96a0b5;
+    --accent:#7c6cff;
+    --accent2:#ff6b8b;
+    --success:#4bc08d;
+    --warning:#ffbf5b;
+    --danger:#ff6b6b;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#0c0e13 0%, #111520 100%);
+    color:var(--text);
+  }
+  .app{display:flex; min-height:100vh}
+  .sidebar{
+    width:250px; background:rgba(23,27,36,.96);
+    border-right:1px solid var(--border);
+    padding:22px 14px; position:fixed; inset:0 auto 0 0;
+  }
+  .brand{
+    padding:10px 12px 18px; border-bottom:1px solid var(--border); margin-bottom:14px;
+  }
+  .brand h1{margin:0; font-size:1.2rem; color:var(--accent)}
+  .brand p{margin:4px 0 0; color:var(--muted); font-size:.85rem}
+  .nav{display:flex; flex-direction:column; gap:8px}
+  .nav button{
+    border:0; background:transparent; color:var(--muted);
+    text-align:left; padding:12px 14px; border-radius:12px;
+    cursor:pointer; font-size:.95rem; font-weight:600;
+  }
+  .nav button:hover{background:var(--panel2); color:var(--text)}
+  .nav button.active{background:rgba(124,108,255,.14); color:var(--accent)}
+  .sidebar .datebox{
+    position:absolute; left:14px; right:14px; bottom:18px;
+    color:var(--muted); font-size:.82rem; padding-top:14px; border-top:1px solid var(--border);
+  }
+  .main{margin-left:250px; width:calc(100% - 250px); padding:26px}
+  .section{display:none}
+  .section.active{display:block}
+  .header{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px;
+  }
+  .header h2{margin:0 0 6px; font-size:1.6rem}
+  .header p{margin:0; color:var(--muted)}
+  .actions{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+  .btn.ghost{background:var(--panel2)}
+  .btn.danger{background:rgba(255,107,107,.12); color:var(--danger)}
+  .btn.success{background:rgba(75,192,141,.12); color:var(--success)}
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px}
+  .grid2{display:grid; grid-template-columns:1.15fr .85fr; gap:16px; margin-bottom:18px}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:18px}
+  .card{
+    background:rgba(23,27,36,.95); border:1px solid var(--border);
+    border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
+  }
+  .card-title{margin:0 0 14px; font-size:.82rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.08em}
+  .stat{padding:16px; border-radius:16px; background:rgba(31,36,48,.7); border:1px solid var(--border)}
+  .stat .icon{font-size:1.5rem; margin-bottom:10px}
+  .stat .label{color:var(--muted); font-size:.8rem; font-weight:700}
+  .stat .value{font-size:2rem; font-weight:900; margin-top:4px}
+  .stat .sub{color:var(--muted); font-size:.8rem; margin-top:4px}
+  .list{display:flex; flex-direction:column; gap:10px}
+  .item{
+    display:flex; align-items:flex-start; gap:12px;
+    background:rgba(31,36,48,.75); border:1px solid var(--border); border-radius:14px;
+    padding:12px;
+  }
+  .dot{width:6px; border-radius:999px; align-self:stretch; min-height:42px}
+  .item-main{flex:1}
+  .item-title{font-weight:800; margin-bottom:4px}
+  .item-meta{display:flex; flex-wrap:wrap; gap:8px; color:var(--muted); font-size:.8rem}
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:3px 8px; border-radius:999px; font-size:.72rem; font-weight:800;
+    background:rgba(255,255,255,.05);
+  }
+  .badge.work{color:#a998ff; background:rgba(124,108,255,.13)}
+  .badge.health{color:#69d8a7; background:rgba(75,192,141,.12)}
+  .badge.personal{color:#ff8cad; background:rgba(255,107,139,.12)}
+  .badge.study{color:#8ef0c9; background:rgba(75,192,141,.10)}
+  .badge.other{color:#ffd47d; background:rgba(255,191,91,.12)}
+  .status{
+    font-size:.72rem; font-weight:900; padding:4px 8px; border-radius:999px; white-space:nowrap;
+  }
+  .status.pending{background:rgba(255,191,91,.12); color:var(--warning)}
+  .status.progress{background:rgba(124,108,255,.14); color:var(--accent)}
+  .status.done{background:rgba(75,192,141,.12); color:var(--success)}
+  .small-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+  .small-actions .btn{padding:8px 10px; border-radius:10px; font-size:.82rem}
+  .muted{color:var(--muted)}
+  .empty{
+    text-align:center; color:var(--muted); padding:30px 14px;
+  }
+  .empty .big{font-size:2rem; margin-bottom:10px}
+  .progress{
+    height:9px; background:#2a3140; border-radius:999px; overflow:hidden;
+  }
+  .fill{height:100%; border-radius:999px}
+  .bars{display:flex; align-items:flex-end; gap:10px; min-height:120px}
+  .barcol{flex:1; text-align:center}
+  .bar{
+    width:100%; min-height:6px; border-radius:10px 10px 0 0; background:var(--accent);
+    margin-top:auto;
+  }
+  .barlabel{margin-top:8px; font-size:.74rem; color:var(--muted)}
+  .score-wrap{display:flex; align-items:center; justify-content:center; gap:18px}
+  .ring{position:relative; width:140px; height:140px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .ring .num{font-size:2rem; font-weight:900; color:var(--accent)}
+  .ring .txt{font-size:.72rem; color:var(--muted); font-weight:800; letter-spacing:.08em}
+  .calendar{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  }
+  .cal-head{
+    text-align:center; font-size:.75rem; color:var(--muted); font-weight:800; padding:4px 0;
+  }
+  .cal-day{
+    min-height:44px; border-radius:12px; border:1px solid var(--border);
+    background:rgba(31,36,48,.55); cursor:pointer; padding:8px; font-size:.88rem;
+    position:relative;
+  }
+  .cal-day:hover{background:rgba(31,36,48,.95)}
+  .cal-day.today{outline:2px solid rgba(124,108,255,.4)}
+  .cal-day.selected{background:var(--accent); color:#fff}
+  .cal-day.other{opacity:.35}
+  .cal-dot{
+    width:6px; height:6px; border-radius:999px; background:var(--accent2);
+    position:absolute; bottom:7px; left:50%; transform:translateX(-50%);
+  }
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  select, input, textarea{
+    width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); outline:none;
+  }
+  textarea{resize:vertical; min-height:80px}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .form-group{margin-bottom:12px}
+  .form-group label{display:block; margin-bottom:6px; color:var(--muted); font-size:.82rem; font-weight:800}
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.68); display:none;
+    align-items:center; justify-content:center; z-index:1000; padding:18px;
+  }
+  .modal-overlay.open{display:flex}
+  .modal{
+    width:min(620px,100%); background:var(--panel); border:1px solid var(--border);
+    border-radius:18px; box-shadow:var(--shadow); padding:18px;
+  }
+  .modal h3{margin:0 0 14px}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:14px}
+  .timer{
+    display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;
+  }
+  .timer-display{
+    font-size:3.2rem; font-weight:900; letter-spacing:1px;
+    font-variant-numeric:tabular-nums; color:var(--accent);
+  }
+  .pom-dots{display:flex; gap:8px}
+  .pom-dot{width:11px; height:11px; border-radius:999px; background:#2f3647}
+  .pom-dot.on{background:var(--accent)}
+  .divider{height:1px; background:var(--border); margin:16px 0}
+  .toast{
+    position:fixed; bottom:22px; right:22px; background:var(--panel);
+    border:1px solid var(--border); color:var(--text); padding:12px 14px;
+    border-radius:12px; box-shadow:var(--shadow); opacity:0; transform:translateY(14px);
+    transition:.25s; z-index:2000; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateY(0)}
+  @media (max-width: 1100px){
+    .grid4{grid-template-columns:repeat(2,1fr)}
+    .grid2,.grid3{grid-template-columns:1fr}
+  }
+  @media (max-width: 760px){
+    .sidebar{position:static; width:100%; border-right:none; border-bottom:1px solid var(--border)}
+    .main{margin-left:0; width:100%; padding:16px}
+    .app{display:block}
+    .grid4{grid-template-columns:1fr}
+    .form-row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>AgendaPro</h1>
+      <p>Agenda, atividades e produtividade</p>
+    </div>
+
+    <div class="nav">
+      <button class="active" onclick="showSection('dashboard', this)">Dashboard</button>
+      <button onclick="showSection('agenda', this)">Agenda</button>
+      <button onclick="showSection('atividades', this)">Atividades</button>
+      <button onclick="showSection('timer', this)">Timer / Foco</button>
+      <button onclick="showSection('produtividade', this)">Produtividade</button>
+    </div>
+
+    <div class="datebox" id="sidebarDate"></div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="section active">
+      <div class="header">
+        <div>
+          <h2 id="greeting">Bom dia</h2>
+          <p id="todayLabel"></p>
+        </div>
+        <div class="actions">
+          <button class="btn primary" onclick="openModal()">+ Nova atividade</button>
+        </div>
+      </div>
+
+      <div class="grid4" id="statsGrid"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Atividades de hoje</div>
+          <div id="todayActivities" class="list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Score do dia</div>
+          <div class="score-wrap">
+            <div class="ring">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="52" stroke="#2b3241" stroke-width="12" fill="none"></circle>
+                <circle id="scoreCircle" cx="70" cy="70" r="52" stroke="var(--accent)" stroke-width="12" fill="none"
+                  stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+              </svg>
+              <div class="center">
+                <div class="num" id="scoreNum">0</div>
+                <div class="txt">SCORE</div>
+              </div>
+            </div>
+            <div style="flex:1; min-width:0">
+              <div style="margin-bottom:12px">
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Concluídas</span><span id="doneCount">0</span></div>
+                <div class="progress"><div id="doneBar" class="fill" style="width:0%; background:var(--success)"></div></div>
+              </div>
+              <div style="margin-bottom:12px">
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Em progresso</span><span id="progCount">0</span></div>
+                <div class="progress"><div id="progBar" class="fill" style="width:0%; background:var(--accent)"></div></div>
+              </div>
+              <div>
+                <div class="muted" style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem"><span>Pendentes</span><span id="pendCount">0</span></div>
+                <div class="progress"><div id="pendBar" class="fill" style="width:0%; background:var(--warning)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Últimos 7 dias</div>
+          <div id="weekChart" class="bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Próximas na agenda</div>
+          <div id="upcomingList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENDA -->
+    <section id="agenda" class="section">
+      <div class="header">
+        <div>
+          <h2>Agenda</h2>
+          <p>Organize seus compromissos por dia e mês</p>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" onclick="changeMonth(-1)">‹ Mês anterior</button>
+          <button class="btn ghost" onclick="changeMonth(1)">Próximo mês ›</button>
+          <button class="btn primary" onclick="openModal()">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title" id="monthLabel">Calendário</div>
+          <div id="calendar" class="calendar"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" id="selectedDayTitle">Eventos do dia</div>
+          <div id="dayEvents" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ATIVIDADES -->
+    <section id="atividades" class="section">
+      <div class="header">
+        <div>
+          <h2>Atividades</h2>
+          <p>Cadastre, filtre e acompanhe tudo em um só lugar</p>
+        </div>
+        <div class="actions">
+          <select id="filterCategory" onchange="renderActivities()" style="width:auto">
+            <option value="">Todas categorias</option>
+            <option value="work">Trabalho</option>
+            <option value="health">Saúde</option>
+            <option value="personal">Pessoal</option>
+            <option value="study">Estudo</option>
+            <option value="other">Outro</option>
+          </select>
+          <select id="filterStatus" onchange="renderActivities()" style="width:auto">
+            <option value="">Todos status</option>
+            <option value="pending">Pendente</option>
+            <option value="progress">Em progresso</option>
+            <option value="done">Concluído</option>
+          </select>
+          <button class="btn primary" onclick="openModal()">+ Nova atividade</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="activitiesList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- TIMER -->
+    <section id="timer" class="section">
+      <div class="header">
+        <div>
+          <h2>Timer / Foco</h2>
+          <p>Use o pomodoro e registre sessões de produtividade</p>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div class="card" style="grid-column:span 2">
+          <div class="card-title">Pomodoro</div>
+          <div class="timer">
+            <div class="toolbar">
+              <button id="modeWork" class="btn ghost" onclick="setTimerMode('work')">🧠 Foco 25 min</button>
+              <button id="modeShort" class="btn ghost" onclick="setTimerMode('short')">☕ Pausa 5 min</button>
+              <button id="modeLong" class="btn ghost" onclick="setTimerMode('long')">🌿 Pausa 15 min</button>
+            </div>
+
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="pom-dots" id="pomDots"></div>
+
+            <div class="toolbar">
+              <button class="btn primary" id="timerStartBtn" onclick="toggleTimer()">Iniciar</button>
+              <button class="btn ghost" onclick="resetTimer()">Resetar</button>
+            </div>
+
+            <div style="width:100%; max-width:420px; margin-top:8px">
+              <label class="muted" style="display:block; text-align:left; margin-bottom:6px; font-size:.82rem; font-weight:800">Vincular à atividade</label>
+              <select id="timerActivity"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Sessões de hoje</div>
+          <div id="sessionsList" class="list"></div>
+          <div class="divider"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span class="muted">Total focado hoje</span>
+            <strong id="focusedToday">0 min</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUTIVIDADE -->
+    <section id="produtividade" class="section">
+      <div class="header">
+        <div>
+          <h2>Produtividade</h2>
+          <p>Resumo do seu desempenho e histórico</p>
+        </div>
+      </div>
+
+      <div class="grid4" id="prodStats"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Distribuição por categoria</div>
+          <div id="categoryStats" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Conclusões nos últimos 7 dias</div>
+          <div id="completionChart" class="bars"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Histórico completo</div>
+        <div id="historyList" class="list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <h3 id="modalTitle">Nova atividade</h3>
+
+    <div class="form-group">
+      <label>Título</label>
+      <input id="actTitle" placeholder="Ex.: Reunião com cliente" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="actCategory">
+          <option value="work">Trabalho</option>
+          <option value="health">Saúde</option>
+          <option value="personal">Pessoal</option>
+          <option value="study">Estudo</option>
+          <option value="other">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Prioridade</label>
+        <select id="actPriority">
+          <option value="high">Alta</option>
+          <option value="mid">Média</option>
+          <option value="low">Baixa</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Data</label>
+        <input id="actDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label>Hora</label>
+        <input id="actTime" type="time" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Duração estimada (min)</label>
+        <input id="actDuration" type="number" min="1" placeholder="60" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="actStatus">
+          <option value="pending">Pendente</option>
+          <option value="progress">Em progresso</option>
+          <option value="done">Concluído</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Observações</label>
+      <textarea id="actNotes" placeholder="Notas, links, detalhes..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="saveActivity()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // ===== STORAGE / STATE =====
+  const LS_ACT = 'agendapro_activities_v1';
+  const LS_SES = 'agendapro_sessions_v1';
+  const LS_POM = 'agendapro_pomcount_v1';
+
+  let activities = JSON.parse(localStorage.getItem(LS_ACT) || '[]');
+  let sessions = JSON.parse(localStorage.getItem(LS_SES) || '[]');
+  let pomCount = parseInt(localStorage.getItem(LS_POM) || '0', 10);
+
+  let currentSection = 'dashboard';
+  let currentMonth = new Date();
+  let selectedDate = new Date();
+  let editingId = null;
+
+  let timerMode = 'work';
+  let timerSeconds = 25 * 60;
+  let timerRunning = false;
+  let timerInterval = null;
+
+  const CATS = {
+    work: { label:'Trabalho', color:'#7c6cff' },
+    health: { label:'Saúde', color:'#4bc08d' },
+    personal: { label:'Pessoal', color:'#ff6b8b' },
+    study: { label:'Estudo', color:'#6ddfb5' },
+    other: { label:'Outro', color:'#ffbf5b' }
+  };
+
+  const STATUS = {
+    pending: { label:'Pendente' },
+    progress: { label:'Em progresso' },
+    done: { label:'Concluído' }
+  };
+
+  const POM = { work:25*60, short:5*60, long:15*60 };
+
+  // ===== HELPERS =====
+  function uid(){
+    return 'id_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  }
+
+  function todayStr(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function toInputDate(d){
+    return d.toISOString().slice(0,10);
+  }
+
+  function fmtDate(ds){
+    const d = new Date(ds + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short' });
+  }
+
+  function fmtMonth(d){
+    return d.toLocaleDateString('pt-BR', { month:'long', year:'numeric' })
+      .replace(/
+^
+\w/, c => c.toUpperCase());
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function saveAll(){
+    localStorage.setItem(LS_ACT, JSON.stringify(activities));
+    localStorage.setItem(LS_SES, JSON.stringify(sessions));
+    localStorage.setItem(LS_POM, String(pomCount));
+  }
+
+  function isSameDay(a, b){
+    return a === b;
+  }
+
+  function dayLabel(ds){
+    const d = new Date(ds + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  }
+
+  function sortActivities(list){
+    return [...list].sort((a,b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return (a.time || '').localeCompare(b.time || '');
+    });
+  }
+
+  function getTodayActivities(){
+    return activities.filter(a => a.date === todayStr());
+  }
+
+  function getFocusedToday(){
+    return sessions.filter(s => s.date === todayStr() && s.mode === 'work').reduce((sum, s) => sum + s.duration, 0);
+  }
+
+  function activityHTML(a, showButtons = true){
+    return `
+      <div class="item" onclick="openModal('${a.id}')">
+        <div class="dot" style="background:${CATS[a.category]?.color || '#888'}"></div>
+        <div class="item-main">
+          <div class="item-title" style="${a.status === 'done' ? 'text-decoration:line-through; opacity:.7' : ''}">${escapeHtml(a.title)}</div>
+          <div class="item-meta">
+            <span class="badge ${a.category}">${CATS[a.category]?.label || 'Outro'}</span>
+            <span>${fmtDate(a.date)}${a.time ? ' • ' + a.time : ''}</span>
+            ${a.duration ? `<span>⏱ ${a.duration} min</span>` : ''}
+          </div>
+          ${a.notes ? `<div class="muted" style="margin-top:6px; font-size:.82rem">${escapeHtml(a.notes)}</div>` : ''}
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px">
+          <span class="status ${a.status}">${STATUS[a.status]?.label || a.status}</span>
+          ${showButtons ? `
+            <div class="small-actions">
+              <button class="btn ghost" onclick="event.stopPropagation(); cycleStatus('${a.id}')">Alternar</button>
+              <button class="btn danger" onclick="event.stopPropagation(); deleteActivity('${a.id}')">Excluir</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll('&', '&')
+      .replaceAll('<', '<')
+      .replaceAll('>', '>')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  // ===== NAV =====
+  function showSection(id, btn){
+    currentSection = id;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    renderSection(id);
+  }
+
+  function renderSection(id){
+    if (id === 'dashboard') renderDashboard();
+    if (id === 'agenda') renderCalendar();
+    if (id === 'atividades') renderActivities();
+    if (id === 'timer') renderTimer();
+    if (id === 'produtividade') renderProductivity();
+  }
+
+  // ===== MODAL =====
+  function openModal(id = null){
+    editingId = id;
+    const modal = document.getElementById('modalOverlay');
+    const title = document.getElementById('modalTitle');
+
+    if (id){
+      const a = activities.find(x => x.id === id);
+      if (!a) return;
+
+      title.textContent = 'Editar atividade';
+      document.getElementById('actTitle').value = a.title || '';
+      document.getElementById('actCategory').value = a.category || 'work';
+      document.getElementById('actPriority').value = a.priority || 'mid';
+      document.getElementById('actDate').value = a.date || todayStr();
+      document.getElementById('actTime').value = a.time || '';
+      document.getElementById('actDuration').value = a.duration || '';
+      document.getElementById('actStatus').value = a.status || 'pending';
+      document.getElementById('actNotes').value = a.notes || '';
+    } else {
+      title.textContent = 'Nova atividade';
+      document.getElementById('actTitle').value = '';
+      document.getElementById('actCategory').value = 'work';
+      document.getElementById('actPriority').value = 'mid';
+      document.getElementById('actDate').value = todayStr();
+      document.getElementById('actTime').value = '';
+      document.getElementById('actDuration').value = '';
+      document.getElementById('actStatus').value = 'pending';
+      document.getElementById('actNotes').value = '';
+    }
+
+    modal.classList.add('open');
+    document.getElementById('actTitle').focus();
+  }
+
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function closeModalOnBg(e){
+    if (e.target.id === 'modalOverlay') closeModal();
+  }
+
+  function saveActivity(){
+    const title = document.getElementById('actTitle').value.trim();
+    if (!title){
+      showToast('Adicione um título.');
+      return;
+    }
+
+    const payload = {
+      id: editingId || uid(),
+      title,
+      category: document.getElementById('actCategory').value,
+      priority: document.getElementById('actPriority').value,
+      date: document.getElementById('actDate').value || todayStr(),
+      time: document.getElementById('actTime').value || '',
+      duration: parseInt(document.getElementById('actDuration').value || '0', 10),
+      status: document.getElementById('actStatus').value,
+      notes: document.getElementById('actNotes').value.trim()
+    };
+
+    if (editingId){
+      activities = activities.map(a => a.id === editingId ? payload : a);
+      showToast('Atividade atualizada.');
+    } else {
+      activities.push(payload);
+      showToast('Atividade criada.');
+    }
+
+    saveAll();
+    closeModal();
+    renderAll();
+  }
+
+  function deleteActivity(id){
+    if (!confirm('Tem certeza que deseja excluir esta atividade?')) return;
+    activities = activities.filter(a => a.id !== id);
+    saveAll();
+    showToast('Atividade excluída.');
+    renderAll();
+  }
+
+  function cycleStatus(id){
+    const order = ['pending', 'progress', 'done'];
+    activities = activities.map(a => {
+      if (a.id !== id) return a;
+      const idx = order.indexOf(a.status);
+      return { ...a, status: order[(idx + 1) % order.length] };
+    });
+    saveAll();
+    renderAll();
+  }
+
+  // ===== DASHBOARD =====
+  function renderDashboard(){
+    const now = new Date();
+    const hour = now.getHours();
+    const greet = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+    document.getElementById('greeting').textContent = `${greet}, Matheus!`;
+    document.getElementById('todayLabel').textContent = now.toLocaleDateString('pt-BR', {
+      weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    });
+    document.getElementById('sidebarDate').textContent = now.toLocaleDateString('pt-BR', {
+      day:'2-digit', month:'short', year:'numeric'
+    });
+
+    const todayActs = getTodayActivities();
+    const done = todayActs.filter(a => a.status === 'done').length;
+    const prog = todayActs.filter(a => a.status === 'progress').length;
+    const pend = todayActs.filter(a => a.status === 'pending').length;
+    const total = todayActs.length || 1;
+
+    const score = Math.round(((done * 100) + (prog * 50)) / total);
+
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat">
+        <div class="icon">📋</div>
+        <div class="label">Atividades hoje</div>
+        <div class="value">${todayActs.length}</div>
+        <div class="sub">${activities.length} no total</div>
+      </div>
+      <div class="stat">
+        <div class="icon">✅</div>
+        <div class="label">Concluídas hoje</div>
+        <div class="value" style="color:var(--success)">${done}</div>
+        <div class="sub">de ${todayActs.length} registradas</div>
+      </div>
+      <div class="stat">
+        <div class="icon">⏱️</div>
+        <div class="label">Tempo focado hoje</div>
+        <div class="value" style="color:var(--accent2)">${getFocusedToday()}</div>
+        <div class="sub">minutos</div>
+      </div>
+      <div class="stat">
+        <div class="icon">🔥</div>
+        <div class="label">Score do dia</div>
+        <div class="value" style="color:${score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)'}">${score}</div>
+        <div class="sub">de 100 pontos</div>
+      </div>
+    `;
+
+    const circle = document.getElementById('scoreCircle');
+    const circumference = 2 * Math.PI * 52;
+    const offset = circumference - (circumference * Math.min(score, 100) / 100);
+    circle.style.strokeDasharray = String(circumference);
+    circle.style.strokeDashoffset = String(offset);
+    document.getElementById('scoreNum').textContent = score;
+
+    document.getElementById('doneCount').textContent = done;
+    document.getElementById('progCount').textContent = prog;
+    document.getElementById('pendCount').textContent = pend;
+
+    document.getElementById('doneBar').style.width = `${(done / total) * 100}%`;
+    document.getElementById('progBar').style.width = `${(prog / total) * 100}%`;
+    document.getElementById('pendBar').style.width = `${(pend / total) * 100}%`;
+
+    document.getElementById('todayActivities').innerHTML =
+      todayActs.length
+        ? sortActivities(todayActs).slice(0, 6).map(a => activityHTML(a, true)).join('')
+        : `<div class="empty"><div class="big">📭</div><div>Nenhuma atividade para hoje</div></div>`;
+
+    const upcoming = sortActivities(
+      activities.filter(a => a.date > todayStr() && a.status !== 'done')
+    ).slice(0, 6);
+
+    document.getElementById('upcomingList').innerHTML =
+      upcoming.length
+        ? upcoming.map(a => activityHTML(a, true)).join('')
+        : `<div class="empty"><div class="big">🗓️</div><div>Sem compromissos futuros</div></div>`;
+
+    renderBars('weekChart', true);
+  }
+
+  // ===== AGENDA =====
+  function renderCalendar(){
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+
+    document.getElementById('monthLabel').textContent = fmtMonth(currentMonth);
+
+    const first = new Date(y, m, 1);
+    const firstWeekday = first.getDay();
+    const lastDay = new Date(y, m + 1, 0).getDate();
+
+    const heads = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    let html = heads.map(h => `<div class="cal-head">${h}</div>`).join('');
+
+    for (let i = 0; i < firstWeekday; i++){
+      html += `<div class="cal-day other"></div>`;
+    }
+
+    const today = todayStr();
+    const selected = toInputDate(selectedDate);
+
+    for (let d = 1; d <= lastDay; d++){
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const has = activities.some(a => a.date === ds);
+
+      const classes = [
+        'cal-day',
+        ds === today ? 'today' : '',
+        ds === selected ? 'selected' : ''
+      ].filter(Boolean).join(' ');
+
+      html += `
+        <div class="${classes}" onclick="selectDate('${ds}')">
+          ${d}
+          ${has ? '<div class="cal-dot"></div>' : ''}
+        </div>
+      `;
+    }
+
+    document.getElementById('calendar').innerHTML = html;
+    renderDayEvents();
+  }
+
+  function changeMonth(delta){
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
+    renderCalendar();
+  }
+
+  function selectDate(ds){
+    selectedDate = new Date(ds + 'T00:00:00');
+    renderCalendar();
+  }
+
+  function renderDayEvents(){
+    const ds = toInputDate(selectedDate);
+    document.getElementById('selectedDayTitle').textContent = `Eventos de ${dayLabel(ds)}`;
+
+    const list = sortActivities(activities.filter(a => a.date === ds));
+    document.getElementById('dayEvents').innerHTML =
+      list.length
+        ? list.map(a => activityHTML(a, true)).join('')
+        : `<div class="empty"><div class="big">📭</div><div>Nenhum evento neste dia</div></div>`;
+  }
+
+  // ===== ACTIVITIES =====
+  function renderActivities(){
+    const cat = document.getElementById('filterCategory')?.value || '';
+    const status = document.getElementById('filterStatus')?.value || '';
+
+    let list = [...activities];
+    if (cat) list = list.filter(a => a.category === cat);
+    if (status) list = list.filter(a => a.status === status);
+
+    list = sortActivities(list);
+
+    document.getElementById('activitiesList').innerHTML =
+      list.length
+        ? list.map(a => activityHTML(a, false)).join('')
+        : `<div class="empty"><div class="big">📭</div><div>Nenhuma atividade encontrada</div></div>`;
+  }
+
+  // ===== TIMER =====
+  function setTimerMode(mode){
+    timerMode = mode;
+    timerSeconds = POM[mode];
+    if (timerRunning) toggleTimer(true);
+
+    document.getElementById('modeWork').classList.toggle('primary', mode === 'work');
+    document.getElementById('modeShort').classList.toggle('primary', mode === 'short');
+    document.getElementById('modeLong').classList.toggle('primary', mode === 'long');
+
+    updateTimerUI();
+  }
+
+  function updateTimerUI(){
+    const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+    const s = String(timerSeconds % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+    document.getElementById('timerStartBtn').textContent = timerRunning ? 'Pausar' : 'Iniciar';
+
+    const dots = document.getElementById('pomDots');
+    dots.innerHTML = Array.from({length:4}, (_, i) =>
+      `<div class="pom-dot ${i < (pomCount % 4) ? 'on' : ''}"></div>`
+    ).join('');
+  }
+
+  function toggleTimer(forcePause = false){
+    if (timerRunning || forcePause){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      updateTimerUI();
+      return;
+    }
+
+    timerRunning = true;
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerUI();
+
+      if (timerSeconds <= 0){
+        clearInterval(timerInterval);
+        timerRunning = false;
+
+        const activityId = document.getElementById('timerActivity').value || '';
+        const activity = activities.find(a => a.id === activityId);
+
+        const duration = Math.round(POM[timerMode] / 60);
+        sessions.push({
+          id: uid(),
+          date: todayStr(),
+          mode: timerMode,
+          duration,
+          time: new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }),
+          activityId,
+          activityTitle: activity ? activity.title : ''
+        });
+
+        if (timerMode === 'work') pomCount += 1;
+        saveAll();
+        showToast(timerMode === 'work' ? 'Sessão de foco concluída.' : 'Pausa concluída.');
+        timerSeconds = POM[timerMode];
+        renderAll();
+      }
+    }, 1000);
+  }
+
+  function resetTimer(){
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSeconds = POM[timerMode];
+    updateTimerUI();
+  }
+
+  function renderTimer(){
+    const activeActivities = sortActivities(activities.filter(a => a.status !== 'done'));
+    const select = document.getElementById('timerActivity');
+    const current = select.value;
+
+    select.innerHTML = `<option value="">Sem atividade vinculada</option>` + activeActivities.map(a =>
+      `<option value="${a.id}">${escapeHtml(a.title)}</option>`
+    ).join('');
+    select.value = current;
+
+    const todaySessions = sessions.filter(s => s.date === todayStr());
+    document.getElementById('sessionsList').innerHTML =
+      todaySessions.length
+        ? todaySessions.map(s => `
+            <div class="item">
+              <div class="dot" style="background:${s.mode === 'work' ? 'var(--accent)' : 'var(--warning)'}"></div>
+              <div class="item-main">
+                <div class="item-title">${s.mode === 'work' ? 'Foco' : s.mode === 'short' ? 'Pausa' : 'Pausa longa'} — ${s.duration} min</div>
+                <div class="item-meta">
+                  <span>${s.time}</span>
+                  ${s.activityTitle ? `<span>• ${escapeHtml(s.activityTitle)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')
+        : `<div class="empty"><div class="big">⏱️</div><div>Nenhuma sessão registrada hoje</div></div>`;
+
+    document.getElementById('focusedToday').textContent = `${getFocusedToday()} min`;
+    updateTimerUI();
+  }
+
+  // ===== PRODUTIVIDADE =====
+  function renderBars(targetId, useDoneOnly = true){
+    const el = document.getElementById(targetId);
+    const days = [];
+
+    for (let i = 6; i >= 0; i--){
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const ds = toInputDate(d);
+
+      const count = useDoneOnly
+        ? activities.filter(a => a.date === ds && a.status === 'done').length
+        : activities.filter(a => a.date === ds).length;
+
+      days.push({
+        label: d.toLocaleDateString('pt-BR', { weekday:'short' }).replace('.', ''),
+        count
+      });
+    }
+
+    const max = Math.max(...days.map(d => d.count), 1);
+    el.innerHTML = days.map(d => `
+      <div class="barcol">
+        <div class="bar" style="height:${Math.max((d.count / max) * 90, d.count ? 8 : 4)}px; background:${d.count ? 'var(--accent)' : '#30384a'}"></div>
+        <div class="barlabel">${d.label}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderProductivity(){
+    const total = activities.length;
+    const done = activities.filter(a => a.status === 'done').length;
+    const rate = total ? Math.round((done / total) * 100) : 0;
+    const totalFocused = sessions.filter(s => s.mode === 'work').reduce((sum, s) => sum + s.duration, 0);
+    const pending = activities.filter(a => a.status === 'pending').length;
+
+    document.getElementById('prodStats').innerHTML = `
+      <div class="stat">
+        <div class="icon">📋</div>
+        <div class="label">Total de atividades</div>
+        <div class="value">${total}</div>
+      </div>
+      <div class="stat">
+        <div class="icon">✅</div>
+        <div class="label">Concluídas</div>
+        <div class="value" style="color:var(--success)">${done}</div>
+      </div>
+      <div class="stat">
+        <div class="icon">📈</div>
+        <div class="label">Taxa de conclusão</div>
+        <div class="value" style="color:${rate >= 70 ? 'var(--success)' : rate >= 40 ? 'var(--warning)' : 'var(--danger)'}">${rate}%</div>
+      </div>
+      <div class="stat">
+        <div class="icon">⏱️</div>
+        <div class="label">Tempo focado</div>
+        <div class="value" style="color:var(--accent2)">${totalFocused}</div>
+        <div class="sub">minutos</div>
+      </div>
+    `;
+
+    const cats = Object.keys(CATS).map(k => ({
+      key: k,
+      count: activities.filter(a => a.category === k).length
+    })).filter(x => x.count > 0);
+
+    document.getElementById('categoryStats').innerHTML =
+      cats.length
+        ? cats.map(c => `
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+                <strong>${CATS[c.key].label}</strong>
+                <span class="muted">${c.count}</span>
+              </div>
+              <div class="progress"><div class="fill" style="width:${(c.count / Math.max(...cats.map(x => x.count))) * 100}%; background:${CATS[c.key].color}"></div></div>
+            </div>
+          `).join('')
+        : `<div class="empty"><div class="big">📊</div><div>Sem dados ainda</div></div>`;
+
+    renderBars('completionChart', true);
+
+    document.getElementById('historyList').innerHTML =
+      activities.length
+        ? sortActivities([...activities].reverse()).map(a => activityHTML(a, false)).join('')
+        : `<div class="empty"><div class="big">🗂️</div><div>Nenhuma atividade cadastrada</div></div>`;
+
+    document.getElementById('sidebarDate').textContent = new Date().toLocaleDateString('pt-BR', {
+      day:'2-digit', month:'short', year:'numeric'
+    });
+  }
+
+  // ===== TIMER DATA =====
+  function renderTimerDots(){
+    const dots = document.getElementById('pomDots');
+    dots.innerHTML = Array.from({length:4}, (_, i) =>
+      `<div class="pom-dot ${i < (pomCount % 4) ? 'on' : ''}"></div>`
+    ).join('');
+  }
+
+  // ===== GLOBAL RENDER =====
+  function renderAll(){
+    renderDashboard();
+    renderCalendar();
+    renderActivities();
+    renderTimer();
+    renderProductivity();
+    renderTimerDots();
+  }
+
+  // ===== SEED =====
+  function seedIfEmpty(){
+    if (activities.length) return;
+
+    const t = todayStr();
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const tm = new Date(); tm.setDate(tm.getDate() + 1);
+
+    activities = [
+      { id: uid(), title:'Reunião de planejamento', category:'work', priority:'high', date:t, time:'09:00', duration:60, status:'done', notes:'', createdAt:Date.now() },
+      { id: uid(), title:'Academia', category:'health', priority:'mid', date:t, time:'07:00', duration:60, status:'done', notes:'', createdAt:Date.now() },
+      { id: uid(), title:'Revisar relatório', category:'work', priority:'high', date:t, time:'14:00', duration:90, status:'progress', notes:'', createdAt:Date.now() },
+      { id: uid(), title:'Estudar TypeScript', category:'study', priority:'mid', date:t, time:'19:00', duration:90, status:'pending', notes:'', createdAt:Date.now() },
+      { id: uid(), title:'Organizar finanças', category:'personal', priority:'low', date:toInputDate(y), time:'', duration:45, status:'done', notes:'', createdAt:Date.now() },
+      { id: uid(), title:'Ligar para cliente X', category:'work', priority:'high', date:toInputDate(tm), time:'10:00', duration:30, status:'pending', notes:'', createdAt:Date.now() }
+    ];
+    saveAll();
+  }
+
+  // ===== INIT =====
+  seedIfEmpty();
+  selectedDate = new Date(todayStr() + 'T00:00:00');
+  currentMonth = new Date();
+
+  setTimerMode('work');
+  renderAll();
+
+  // Clique fora fecha modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Start on dashboard
+  showSection('dashboard', document.querySelector('.nav button.active'));
+</script>
+</body>
+</html>
